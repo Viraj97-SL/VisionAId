@@ -5,6 +5,7 @@ from core.voice_control import VoiceControl
 import threading
 import queue
 import time
+import nupy as np
 
 
 class VisionAIDUI:
