@@ -1,44 +1,49 @@
-import speech_recognition as sr
+import sounddevice as sd
+import numpy as np
+import whisper
+import tempfile
+import os
+import scipy.io.wavfile as wav
 from core.utils import speak
+
+
 
 class DialogAgent:
     def __init__(self):
-        self.recognizer = sr.Recognizer()
-        self.microphone = sr.Microphone()
+        self.model = whisper.load_model("base")  # You can use "tiny", "small", etc.
+
+    def record_audio(self, duration=5, fs=16000):
+        speak("Where do you want to go? Say something like 'nearby hospital', 'school', 'supermarket', or 'bus halt'.")
+        print("Recording...")
+        recording = sd.rec(int(duration * fs), samplerate=fs, channels=1, dtype='int16')
+        sd.wait()
+        print("Recording finished.")
+
+        # Save to temp file
+        temp_file = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+        wav.write(temp_file.name, fs, recording)
+        return temp_file.name
 
     def get_location_type(self):
-        speak("Where do you want to go? You can say hospital, supermarket, school or bus halt.")
-        with self.microphone as source:
-            self.recognizer.adjust_for_ambient_noise(source)
-            try:
-                audio = self.recognizer.listen(source, timeout=5, phrase_time_limit=5)
-                response = self.recognizer.recognize_google(audio).lower().strip()
-                print(f"Heard: {response}")
+        try:
+            file_path = self.record_audio()
+            result = self.model.transcribe(file_path)
+            text = result["text"].lower().strip()
+            print(f"Whisper Transcription: {text}")
 
-                # Normalize known types
-                valid_types = {
-                    "hospital": "hospital",
-                    "supermarket": "supermarket",
-                    "school": "school",
-                    "bus halt": "bus stop",
-                    "bus stop": "bus stop",
-                }
+            # Check if known location type is mentioned
+            for keyword in ["hospital", "school", "supermarket", "bus halt"]:
+                if keyword in text:
+                    return keyword
 
-                for key in valid_types:
-                    if key in response:
-                        return valid_types[key]
+            speak("I couldn't understand the location type. Please try again.")
+            return None
 
-                speak("Sorry, I only support hospital, supermarket, school, or bus stop.")
-            except sr.WaitTimeoutError:
-                speak("I didn't hear anything. Please try again.")
-            except sr.UnknownValueError:
-                speak("Sorry, I couldn't understand. Please try again.")
-            except sr.RequestError as e:
-                speak(f"Speech recognition error: {str(e)}")
-
-        return None
+        except Exception as e:
+            print(f"[DialogAgent Error] {e}")
+            speak("An error occurred while processing your voice.")
+            return None
 
     def get_user_location(self):
-        # Dummy coordinates for testing (e.g., Central London)
-        # Replace with real GPS if available or ask user input later
-        return 51.5074, -0.1278  # Latitude, Longitude
+        # TEMPORARY: Replace with your own GPS or IP-based method
+        return (51.5074, -0.1278)  # Central London example
