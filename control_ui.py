@@ -46,7 +46,8 @@ class VisionAIDUI:
         agent_config = {
             'object_detection': {'display_name': 'Object Detection'},
             'barcode_scanner': {'display_name': 'Barcode Reader'},
-            'document_reader': {'display_name': 'Document OCR'}
+            'document_reader': {'display_name': 'Document OCR'},
+            'navigation': {'display_name': 'Navigation'}
         }
 
         for agent_name, config in agent_config.items():
