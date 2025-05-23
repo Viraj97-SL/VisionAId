@@ -37,49 +37,104 @@ pip install -r requirements.txt
 sudo apt-get install portaudio19-dev  # Linux
 brew install portaudio               # MacOS
 
-Project Structure 🗂️
+``` 
 
-Project1/
-├── VisionAID/
-│   ├── navigation/        # Voice-guided navigation
-│   ├── vision/            # Object/barcode detection
-│   ├── audio_processing/  # Voice I/O
-│   └── utils/            # Shared utilities
-├── models/
-│   ├── yolo/             # Pretrained object detection
-│   └── ocr/              # Text recognition models
-├── docs/                 # User manuals
-└── tests/                # Unit tests
+## Project Structure 🗂️
+
+```markdown
+## Project Structure
+
+visionAID/
+├── .venv/                  # Virtual environment
+├── agents/
+│ ├── navigation/           # Navigation subsystem
+│ │ ├── dialog_agent.py     # Voice interface (Whisper STT/TTS)
+│ │ ├── location_agent.py   # Geospatial search (OSM/Nominatim)
+│ │ ├── navigation_agent.py # Route coordination
+│ │ ├── navigator.py        # Guidance engine
+│ │ └── route_planner.py    # OSRM pathfinding
+│ ├── barcode_reader.py     # ZXing-based scanner
+│ ├── document_ocr.py       # Tesseract/EasyOCR processor
+│ └── object_detection.py   # YOLOv8 real-time detection
+├── core/
+│ ├── config.yaml           # App configuration
+│ ├── master_agent.py       # Main controller
+│ ├── utils.py              # Common utilities
+│ └── voice_control.py      # Audio pipeline
+├── memory/                 # Runtime artifacts
+│ ├── session_history.log   # JSON activity log
+│ └── output.wav            # Audio cache
+├── control_ui.py           # PyQt interface
+├── requirements.txt        # Pip dependencies
+└── yolov8n.pt              # Pretrained vision model
+
+```
 
 
-Usage Examples 🚀
+### Component Relationships
 
-from VisionAID import MasterController
+```mermaid
+flowchart TD
+    A[Master Agent] --> B[Navigation]
+    A --> C[Vision]
+    A --> D[UI]
+    
+    B --> B1[Dialog]
+    B --> B2[Location]
+    B --> B3[Routing]
+    
+    C --> C1[Object Detection]
+    C --> C2[Barcode]
+    C --> C3[Document OCR]
+    
+    D --> D1[Control Panel]
+    D --> D2[Voice I/O]
 
-# Initialize all modules
-assistant = MasterController()
+```
 
-# Object detection
-assistant.detect_objects()  # Speaks detected objects
+## Key Technologies 🛠️
 
-# Barcode scanning
-product = assistant.scan_barcode()  
-# Output: "Colgate Toothpaste, Ingredients: Sorbitol, Hydrated Silica..."
 
-# Document reading
-text = assistant.read_document()
-print(text)
+### Navigation Agent
+Voice Processing
 
-Key Technologies 🛠️
-Voice Processing: Whisper + PyAudio
+* Whisper (OpenAI's speech-to-text)
 
-Computer Vision: OpenCV + YOLOv5
+* PyAudio/sounddevice (audio capture)
 
-OCR: Tesseract + EasyOCR
+Routing & Geocoding
 
-Navigation: OSRM + Geopy
+* OSRM (Open Source Routing Machine)
 
-Documentation 📚
+* Geopy + Nominatim (location search)
+
+### Vision Modules
+Object Detection
+
+* YOLOv8 (via yolov8n.pt weights)
+
+* OpenCV (image processing)
+
+Barcode/OCR
+
+* ZXing and Pyzbar (barcode scanning)
+
+* Tesseract/EasyOCR (text extraction)
+
+### Core System
+
+* Utilities
+
+* PyYAML (for config.yaml)
+
+* NumPy (audio/data processing)
+
+### Audio Feedback
+
+* pygame/gTTS (text-to-speech)
+
+## Documentation 📚
+
 User Guide
 
 API Reference
