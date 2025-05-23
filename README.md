@@ -6,7 +6,7 @@
 ![OpenCV](https://img.shields.io/badge/vision-OpenCV-red)
 ![PyTorch](https://img.shields.io/badge/ML-PyTorch-orange)
 
-A comprehensive assistive system featuring voice-controlled navigation, real-time object detection, barcode/product recognition, and document reading capabilities.
+VisionAID is an intelligent assistive system that combines voice-controlled navigation with real-time environmental awareness for visually impaired people and others. The system processes spoken commands to guide users to destinations using offline routing (OSRM/Geopy), while its computer vision modules detect objects (YOLOv8), scan barcodes (ZXing), and read documents (Tesseract/EasyOCR). Designed for full offline operation, it runs efficiently on low-cost hardware like Raspberry Pi, delivering accurate results through a modular Python architecture that integrates Whisper for speech recognition and pygame for audio feedback.
 
 ## Features ✨
 
@@ -50,7 +50,7 @@ visionAID/
 │ ├── navigation/           # Navigation subsystem
 │ │ ├── dialog_agent.py     # Voice interface (Whisper STT/TTS)
 │ │ ├── location_agent.py   # Geospatial search (OSM/Nominatim)
-│ │ ├── navigation_agent.py # Route coordination
+│ │ ├── navigation_agent.py # sub_main agent for navigation
 │ │ ├── navigator.py        # Guidance engine
 │ │ └── route_planner.py    # OSRM pathfinding
 │ ├── barcode_reader.py     # ZXing-based scanner
