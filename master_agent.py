@@ -3,6 +3,7 @@ import time
 from agents.barcode_reader import BarcodeReaderAgent
 from agents.object_detection import ObjectDetectionAgent
 from agents.document_ocr import DocumentOCRAgent
+from agents.navigation.navigation_agent import NavigationAgent
 from core.utils import speak
 import numpy as np
 import threading
@@ -14,11 +15,14 @@ class MasterAgent:
         self.agents = {
             "object_detection": ObjectDetectionAgent(),
             "barcode_scanner": BarcodeReaderAgent(),
-            "document_reader": DocumentOCRAgent()
+            "document_reader": DocumentOCRAgent(),
+            "navigation": NavigationAgent()
         }
 
         self.current_agent = None
         self.running = True
+
+        self.agent_busy = False
 
         # Visual feedback settings
         self.display_help = True
@@ -27,9 +31,6 @@ class MasterAgent:
 
         # Thread safety
         self.lock = threading.Lock()
-
-        # New flag to indicate an agent is running
-        self.agent_busy = False
 
     def run(self):
         try:
@@ -50,9 +51,6 @@ class MasterAgent:
     def switch_agent(self, agent_name):
         with self.lock:
             try:
-                # Mark agent busy before switching
-                self.agent_busy = True
-
                 if self.current_agent:
                     self.current_agent.terminate()
                     time.sleep(0.5)
@@ -60,13 +58,11 @@ class MasterAgent:
                 self.current_agent = self.agents.get(agent_name)
                 if not self.current_agent:
                     speak("Unknown agent requested.")
-                    self.agent_busy = False
                     return
 
                 speak(f"Switched to {agent_name.replace('_', ' ')}")
                 self.last_switch_time = time.time()
 
-                # Run agent (blocking or non-blocking)
                 if hasattr(self.current_agent, 'run_non_blocking'):
                     self.current_agent.run_non_blocking()
                 else:
@@ -74,9 +70,6 @@ class MasterAgent:
 
             except Exception as e:
                 speak(f"Failed to switch agents: {str(e)}")
-            finally:
-                # Mark agent no longer busy when done
-                self.agent_busy = False
 
     def display_status(self):
         if not self.current_agent or time.time() - self.last_switch_time < self.help_cooldown:
@@ -95,6 +88,7 @@ class MasterAgent:
                 "'Object detection'",
                 "'Scan barcode'",
                 "'Read document'",
+                "'Navigate'",
                 "'Exit'"
             ]
 
