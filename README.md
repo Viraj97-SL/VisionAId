@@ -36,3 +36,52 @@ pip install -r requirements.txt
 # Additional setup for audio
 sudo apt-get install portaudio19-dev  # Linux
 brew install portaudio               # MacOS
+
+Project Structure 🗂️
+
+Project1/
+├── VisionAID/
+│   ├── navigation/        # Voice-guided navigation
+│   ├── vision/            # Object/barcode detection
+│   ├── audio_processing/  # Voice I/O
+│   └── utils/            # Shared utilities
+├── models/
+│   ├── yolo/             # Pretrained object detection
+│   └── ocr/              # Text recognition models
+├── docs/                 # User manuals
+└── tests/                # Unit tests
+
+
+Usage Examples 🚀
+
+from VisionAID import MasterController
+
+# Initialize all modules
+assistant = MasterController()
+
+# Object detection
+assistant.detect_objects()  # Speaks detected objects
+
+# Barcode scanning
+product = assistant.scan_barcode()  
+# Output: "Colgate Toothpaste, Ingredients: Sorbitol, Hydrated Silica..."
+
+# Document reading
+text = assistant.read_document()
+print(text)
+
+Key Technologies 🛠️
+Voice Processing: Whisper + PyAudio
+
+Computer Vision: OpenCV + YOLOv5
+
+OCR: Tesseract + EasyOCR
+
+Navigation: OSRM + Geopy
+
+Documentation 📚
+User Guide
+
+API Reference
+
+Development Setup
