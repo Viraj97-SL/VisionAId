@@ -5,15 +5,8 @@ import os
 import time
 from threading import Lock
 import cv2
-
 pygame.mixer.init()
-
-
-import tempfile
-import os
 from gtts import gTTS
-import pygame
-import time
 
 def speak(text):
     tts = gTTS(text)
