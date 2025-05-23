@@ -10,4 +10,8 @@ agents:
   document_ocr:
     display_name: "Document Reader"
     hotkey: "3"
+
+  navigation:
+    display_name: "Navigation"
+    hotkey: "4"
     
