@@ -13,8 +13,22 @@ class NavigationAgent:
 
     def run(self):
         speak("Navigation agent activated.")
+
         place_type = self.dialog.get_location_type()
+        if not place_type:
+            speak("I didn't catch that. Please say a location type like hospital, supermarket, school, or bus halt.")
+            return
+
+        valid_types = ["hospital", "supermarket", "school", "bus halt"]
+        if place_type not in valid_types:
+            speak(f"'{place_type}' is not a valid option.")
+            return
+
+        # ✅ You must define your current location manually or via GPS in get_user_location
         lat, lon = self.dialog.get_user_location()
+        if lat is None or lon is None:
+            speak("Could not determine your current location.")
+            return
 
         destination = self.locator.find_nearby(place_type, lat, lon)
         if not destination:
@@ -26,6 +40,10 @@ class NavigationAgent:
         end_lon = float(destination["lon"])
 
         directions = self.router.get_directions(lat, lon, end_lat, end_lon)
+        if not directions or directions == ["Route could not be found"]:
+            speak("I couldn't find a walking route to that location.")
+            return
+
         speak("Starting navigation.")
         self.navigator.guide(directions)
 
