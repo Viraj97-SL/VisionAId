@@ -1,0 +1,13 @@
+agents:
+  object_detection:
+    display_name: "Object Detection"
+    hotkey: "1"
+
+  barcode_reader:
+    display_name: "Barcode Scanner"
+    hotkey: "2"
+
+  document_ocr:
+    display_name: "Document Reader"
+    hotkey: "3"
+    
