@@ -13,6 +13,9 @@ class VoiceControl:
             "read text": "document_reader",
             "navigate": "navigation",
             "navigation": "navigation",
+            "find product": "ecommerce_agent",
+            "search online": "ecommerce_agent",
+            "ecommerce_agent": "ecommerce_agent",
             "exit": "exit"
         }
 
@@ -26,6 +29,7 @@ class VoiceControl:
                 "barcode_scanner": "Barcode Scanner",
                 "document_reader": "Document Reader",
                 "navigation": "Navigation",
+                "ecommerce_agent": "Search Online"
             }
             speak("Say a command: " + ", ".join(friendly_names.values()))
 
