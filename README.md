@@ -23,6 +23,12 @@ VisionAID is an intelligent assistive system that combines voice-controlled navi
 | Product Analyzer | Reads ingredients/nutrition facts | OCR+Tesseract |
 | Document Reader | Reads printed text with formatting | EasyOCR |
 
+### Ecommerce Agent 🛒 
+- Voice-based product query (e.g. “Find a backpack”)
+- Searches top results from Amazon and eBay
+- Compares prices and announces best deal
+- Works entirely via voice I/O for hands-free use
+
 ## Installation 💻
 
 ```bash
@@ -45,28 +51,33 @@ brew install portaudio               # MacOS
 ## Project Structure
 
 visionAID/
-├── .venv/                  # Virtual environment
+├── .venv/                        # Virtual environment
 ├── agents/
-│ ├── navigation/           # Navigation subsystem
-│ │ ├── dialog_agent.py     # Voice interface (Whisper STT/TTS)
-│ │ ├── location_agent.py   # Geospatial search (OSM/Nominatim)
-│ │ ├── navigation_agent.py # sub_main agent for navigation
-│ │ ├── navigator.py        # Guidance engine
-│ │ └── route_planner.py    # OSRM pathfinding
-│ ├── barcode_reader.py     # ZXing-based scanner
-│ ├── document_ocr.py       # Tesseract/EasyOCR processor
-│ └── object_detection.py   # YOLOv8 real-time detection
+│ ├── navigation/                 # Navigation subsystem
+│ │ ├── dialog_agent.py           # Voice interface (Whisper STT/TTS)
+│ │ ├── location_agent.py         # Geospatial search (OSM/Nominatim)
+│ │ ├── navigation_agent.py       # sub_main agent for navigation
+│ │ ├── navigator.py              # Guidance engine
+│ │ └── route_planner.py          # OSRM pathfinding
+│ ├── ecommerce_agent/            # NEW: Ecommerce subsystem
+│   ├── ecommerce_agent.py        # Coordinator
+│   ├── product_capture_agent.py  # Voice capture + Whisper
+│   ├── web_scraper_agent.py      # Amazon/eBay scraper
+│   └── summary_agent.py          # Price comparison
+│ ├── barcode_reader.py           # ZXing-based scanner
+│ ├── document_ocr.py             # Tesseract/EasyOCR processor
+│ └── object_detection.py         # YOLOv8 real-time detection
 ├── core/
-│ ├── config.yaml           # App configuration
-│ ├── master_agent.py       # Main controller
-│ ├── utils.py              # Common utilities
-│ └── voice_control.py      # Audio pipeline
-├── memory/                 # Runtime artifacts
-│ ├── session_history.log   # JSON activity log
-│ └── output.wav            # Audio cache
-├── control_ui.py           # PyQt interface
-├── requirements.txt        # Pip dependencies
-└── yolov8n.pt              # Pretrained vision model
+│ ├── config.yaml                 # App configuration
+│ ├── master_agent.py             # Main controller
+│ ├── utils.py                    # Common utilities
+│ └── voice_control.py            # Audio pipeline
+├── memory/                       # Runtime artifacts
+│ ├── session_history.log         # JSON activity log
+│ └── output.wav                  # Audio cache
+├── control_ui.py                 # PyQt interface
+├── requirements.txt              # Pip dependencies
+└── yolov8n.pt                    # Pretrained vision model
 
 ```
 
@@ -77,8 +88,9 @@ visionAID/
 flowchart TD
     A[Master Agent] --> B[Navigation]
     A --> C[Vision]
-    A --> D[UI]
-    
+    A --> D[Ecommerce]
+    A --> E[UI]
+
     B --> B1[Dialog]
     B --> B2[Location]
     B --> B3[Routing]
@@ -87,8 +99,13 @@ flowchart TD
     C --> C2[Barcode]
     C --> C3[Document OCR]
     
-    D --> D1[Control Panel]
-    D --> D2[Voice I/O]
+    D --> D1[Product Voice Input]
+    D --> D2[Scraping Engine]
+    D --> D3[Comparison Engine]
+
+    E --> E1[Control Panel]
+    E --> E2[Voice I/O]
+
 
 ```
 
@@ -120,6 +137,19 @@ Barcode/OCR
 * ZXing and Pyzbar (barcode scanning)
 
 * Tesseract/EasyOCR (text extraction)
+
+### Ecommerce Agent
+Voice Product Capture
+
+* Whisper + sounddevice (voice interface)
+
+Web Scraping
+
+* BeautifulSoup + Requests (Amazon, eBay)
+
+Comparison Logic
+
+* Filtering, sorting, and summarizing deals via custom agent
 
 ### Core System
 
