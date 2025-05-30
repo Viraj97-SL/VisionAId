@@ -14,4 +14,10 @@ agents:
   navigation:
     display_name: "Navigation"
     hotkey: "4"
+
+  ecommerce_agent:
+    display_name: "Search Online"
+    hotkey: "5"
+
+    
     
