@@ -5,7 +5,6 @@ from core.voice_control import VoiceControl
 import threading
 import queue
 import time
-import nupy as np
 
 
 class VisionAIDUI:
@@ -48,7 +47,8 @@ class VisionAIDUI:
             'object_detection': {'display_name': 'Object Detection'},
             'barcode_scanner': {'display_name': 'Barcode Reader'},
             'document_reader': {'display_name': 'Document OCR'},
-            'navigation': {'display_name': 'Navigation'}
+            'navigation': {'display_name': 'Navigation'},
+            'ecommerce_agent': {'display_name': 'Search Online'}
         }
 
         for agent_name, config in agent_config.items():
