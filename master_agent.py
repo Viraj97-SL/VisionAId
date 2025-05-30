@@ -1,6 +1,7 @@
 import cv2
 import time
 from agents.barcode_reader import BarcodeReaderAgent
+from agents.ecommerce_agent.ecommerce_agent import EcommerceAgent
 from agents.object_detection import ObjectDetectionAgent
 from agents.document_ocr import DocumentOCRAgent
 from agents.navigation.navigation_agent import NavigationAgent
@@ -16,7 +17,8 @@ class MasterAgent:
             "object_detection": ObjectDetectionAgent(),
             "barcode_scanner": BarcodeReaderAgent(),
             "document_reader": DocumentOCRAgent(),
-            "navigation": NavigationAgent()
+            "navigation": NavigationAgent(),
+            "ecommerce_agent": EcommerceAgent()
         }
 
         self.current_agent = None
@@ -89,6 +91,7 @@ class MasterAgent:
                 "'Scan barcode'",
                 "'Read document'",
                 "'Navigate'",
+                "'Ecommerce'",
                 "'Exit'"
             ]
 
