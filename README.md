@@ -33,7 +33,7 @@ VisionAID is an intelligent assistive system that combines voice-controlled navi
 
 ```bash
 # Clone with submodules
-git clone --recurse-submodules https://github.com/Viraj97-SL/Project1.git
+git clone --recurse-submodules https://github.com/Viraj97-SL/VisionAId.git
 cd Project1
 
 # Install with pip
