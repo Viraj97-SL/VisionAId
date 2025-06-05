@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import logging
+from typing import List, Dict  # Add these imports
 
 class WebScraperAgent:
     def __init__(self):
@@ -50,3 +51,20 @@ class WebScraperAgent:
         except Exception as e:
             self.logger.error(f"eBay scrape error: {e}")
             return []
+
+    def scrape_with_reviews(self, product_url: str) -> Dict:
+        """Enhanced scraping to get reviews"""
+        try:
+            resp = requests.get(product_url, headers=self.headers)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+
+            # Add review scraping logic
+            reviews = [review.text.strip() for review in soup.select('.review-text')[:5]]
+
+            return {
+                'reviews': reviews,
+                'review_count': len(reviews)
+            }
+        except Exception as e:
+            self.logger.error(f"Review scrape error: {e}")
+            return {'reviews': [], 'review_count': 0}
