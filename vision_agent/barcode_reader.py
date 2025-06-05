@@ -4,6 +4,8 @@ import requests
 from core.utils import speak
 import time
 import warnings
+import zmq
+import json
 
 
 class BarcodeReaderAgent:
@@ -14,14 +16,33 @@ class BarcodeReaderAgent:
         self.scan_cooldown = 3
         self.min_confidence = 30
 
+        # MCP Setup (non-blocking PUB)
+        self.context = zmq.Context()
+        self.mcp_socket = self.context.socket(zmq.PUB)
+        self.mcp_socket.connect("tcp://localhost:5555")
+
         if not self.camera.isOpened():
             raise RuntimeError("Could not open camera")
+
+    def _publish_to_mcp(self, barcode_data, product_info):
+        try:
+            self.mcp_socket.send_json({
+                "source": "vision",
+                "agent": "barcode",
+                "data": {
+                    "code": barcode_data,
+                    "product": product_info[0] if product_info else None,
+                    "brand": product_info[1] if product_info else None,
+                },
+                "timestamp": time.time()
+            })
+        except Exception as e:
+            print(f"[MCP ERROR] Failed to publish: {e}")
 
     def run(self):
         try:
             warnings.filterwarnings("ignore", category=RuntimeWarning)
 
-            # Camera test
             test_ret, test_frame = self.camera.read()
             if not test_ret:
                 speak("Camera failed to initialize")
@@ -54,7 +75,10 @@ class BarcodeReaderAgent:
                             product_info = self.lookup_product(barcode_data)
                             feedback = self.format_feedback(barcode_data, product_info)
 
-                            # Enhanced visualization
+                            # MCP publishing
+                            self._publish_to_mcp(barcode_data, product_info)
+
+                            # Drawing rectangle
                             x, y, w, h = barcode.rect
                             cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 4)
 
@@ -71,7 +95,7 @@ class BarcodeReaderAgent:
                         print(f"Barcode error: {e}")
                         continue
 
-                # Display instructions
+                # UI
                 cv2.putText(frame, "Scan a barcode/QR code", (20, 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
                 cv2.putText(frame, "Press 'q' to quit", (20, 70),
@@ -109,17 +133,20 @@ class BarcodeReaderAgent:
                         product.get('quantity', ""),
                         product.get('ingredients_text', "No ingredients")
                     )
-        except requests.RequestException:
-            return None
+        except requests.RequestException as e:
+            print(f"[LOOKUP ERROR] {e}")
         return None
 
     def terminate(self):
         self.running = False
         self.camera.release()
         cv2.destroyAllWindows()
+        if hasattr(self, 'mcp_socket'):
+            self.mcp_socket.close()
+        if hasattr(self, 'context'):
+            self.context.term()
 
 
 if __name__ == "__main__":
     agent = BarcodeReaderAgent()
     agent.run()
-
