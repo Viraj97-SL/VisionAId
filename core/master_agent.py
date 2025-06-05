@@ -1,13 +1,15 @@
 import cv2
 import time
-from agents.barcode_reader import BarcodeReaderAgent
+import zmq
+import threading
+import numpy as np
+from agents.vision_agent.barcode_reader import BarcodeReaderAgent
 from agents.ecommerce_agent.ecommerce_agent import EcommerceAgent
-from agents.object_detection import ObjectDetectionAgent
-from agents.document_ocr import DocumentOCRAgent
+from agents.vision_agent.object_detection import ObjectDetectionAgent
+from agents.vision_agent.document_ocr import DocumentOCRAgent
 from agents.navigation.navigation_agent import NavigationAgent
 from core.utils import speak
-import numpy as np
-import threading
+from threading import Thread
 
 
 class MasterAgent:
@@ -23,7 +25,6 @@ class MasterAgent:
 
         self.current_agent = None
         self.running = True
-
         self.agent_busy = False
 
         # Visual feedback settings
@@ -34,12 +35,72 @@ class MasterAgent:
         # Thread safety
         self.lock = threading.Lock()
 
+        # MCP Integration
+        self._start_vision_listener()
+        self.message_queue = []
+        self.last_messages = {}
+
+    def _start_vision_listener(self):
+        """Start ZeroMQ listener in a background thread"""
+
+        def _listen():
+            context = zmq.Context()
+            subscriber = context.socket(zmq.SUB)
+            subscriber.bind("tcp://*:5555")  # Agents will publish to this port
+            subscriber.setsockopt_string(zmq.SUBSCRIBE, "vision")
+
+            while self.running:
+                try:
+                    msg = subscriber.recv_json()
+                    with self.lock:
+                        self._handle_vision_message(msg)
+                except zmq.ZMQError as e:
+                    if self.running:
+                        speak(f"Communication error: {str(e)}")
+                except Exception as e:
+                    print(f"Message handling error: {str(e)}")
+
+        Thread(target=_listen, daemon=True).start()
+
+    def _handle_vision_message(self, msg):
+        """Process incoming messages from agents"""
+        agent_type = msg.get("agent", "")
+        data = msg.get("data", {})
+        timestamp = msg.get("timestamp", time.time())
+
+        # Store last message from each agent
+        self.last_messages[agent_type] = {
+            "data": data,
+            "timestamp": timestamp
+        }
+
+        # Agent-specific processing
+        if agent_type == "barcode":
+            code = data.get("code", "")
+            product = data.get("product", "unknown product")
+            speak(f"Barcode scanned: {product}")
+
+        elif agent_type == "document":
+            text = data.get("text", "")[:100]  # First 100 chars
+            speak(f"Document text recognized: {text}")
+
+        elif agent_type == "object":
+            objects = data.get("objects", [])
+            if objects:
+                speak(f"Detected objects: {', '.join(objects[:3])}")
+
     def run(self):
         try:
             while self.running:
                 self.display_status()
 
-                # Press Q to exit (optional for visual interface)
+                # Process any queued messages
+                with self.lock:
+                    if self.message_queue:
+                        msg = self.message_queue.pop(0)
+                        self._handle_vision_message(msg)
+
+                # Press Q to exit
                 if cv2.waitKey(1) & 0xFF == ord('q'):
                     self.shutdown()
                     break
@@ -74,16 +135,32 @@ class MasterAgent:
                 speak(f"Failed to switch agents: {str(e)}")
 
     def display_status(self):
+        overlay = np.zeros((350, 700, 3), dtype=np.uint8)  # Slightly larger window
+
+        # Current agent status
+        if self.current_agent:
+            status_text = f"Active: {type(self.current_agent).__name__}"
+            cv2.putText(overlay, status_text, (50, 80),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+
+        # Last messages display
+        y_offset = 120
+        cv2.putText(overlay, "Last Events:", (50, y_offset),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+
+        for agent, info in self.last_messages.items():
+            y_offset += 30
+            elapsed = time.time() - info['timestamp']
+            summary = self._summarize_message(agent, info['data'])
+            text = f"{agent.replace('_', ' ')}: {summary} ({elapsed:.1f}s ago)"
+            cv2.putText(overlay, text, (50, y_offset),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 200, 0), 1)
+
+        # Help commands (when needed)
         if not self.current_agent or time.time() - self.last_switch_time < self.help_cooldown:
-            overlay = np.zeros((300, 600, 3), dtype=np.uint8)
-
-            if self.current_agent:
-                status_text = f"Active: {type(self.current_agent).__name__}"
-                cv2.putText(overlay, status_text, (50, 80),
-                            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-
+            y_offset += 50
             help_text = "Voice Commands:"
-            cv2.putText(overlay, help_text, (50, 140),
+            cv2.putText(overlay, help_text, (50, y_offset),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 1)
 
             commands = [
@@ -96,10 +173,20 @@ class MasterAgent:
             ]
 
             for i, cmd in enumerate(commands):
-                cv2.putText(overlay, cmd, (50, 180 + i * 40),
+                cv2.putText(overlay, cmd, (50, y_offset + 30 + i * 30),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 0), 1)
 
-            cv2.imshow("VisionAI Control", overlay)
+        cv2.imshow("VisionAI Control", overlay)
+
+    def _summarize_message(self, agent, data):
+        """Create a short summary of agent messages"""
+        if agent == "barcode":
+            return data.get("code", "no code")[:10]
+        elif agent == "document":
+            return f"{len(data.get('text', ''))} chars"
+        elif agent == "object":
+            return f"{len(data.get('objects', []))} objects"
+        return "activity detected"
 
     def shutdown(self):
         speak("Shutting down all systems")
