@@ -2,6 +2,8 @@ import cv2
 import pytesseract
 from core.utils import speak
 import numpy as np
+import zmq
+import time
 
 
 class DocumentOCRAgent:
@@ -9,11 +11,28 @@ class DocumentOCRAgent:
         self.running = True
         self.camera = cv2.VideoCapture(0)
 
-        # Update this path if needed
+        # MCP Setup (ZeroMQ Publisher)
+        self.context = zmq.Context()
+        self.mcp_socket = self.context.socket(zmq.PUB)
+        self.mcp_socket.connect("tcp://localhost:5555")  # Connect to MCP
+
+        # Tesseract path (update if needed)
         pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
         if not self.camera.isOpened():
             raise RuntimeError("Could not open camera")
+
+    def _publish_to_mcp(self, text):
+        """Send OCR results to MCP (ZeroMQ)"""
+        self.mcp_socket.send_json({
+            "source": "vision",
+            "agent": "document",
+            "data": {
+                "text": text[:500],  # Truncate long text
+                "char_count": len(text)
+            },
+            "timestamp": time.time()
+        })
 
     def run(self):
         """Main execution loop called by master agent"""
@@ -46,11 +65,15 @@ class DocumentOCRAgent:
         cv2.imshow("Document Scanner", frame)
 
     def _process_document(self, frame):
-        """Handle OCR processing"""
+        """Handle OCR processing and MCP publishing"""
         processed_image = self._preprocess_image(frame)
         text = pytesseract.image_to_string(processed_image)
 
         if text.strip():
+            # Publish to MCP (ZeroMQ)
+            self._publish_to_mcp(text)
+
+            # Original functionality (speak/print)
             speak("I found some text. Here's what I see:")
             print("Extracted Text:", text)
             speak(text[:300])  # Limit audio output
@@ -58,7 +81,7 @@ class DocumentOCRAgent:
             speak("No text detected in the document")
 
     def _preprocess_image(self, img):
-        """Enhance image for better OCR"""
+        """Enhance image for better OCR (unchanged)"""
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         processed = cv2.adaptiveThreshold(gray, 255,
                                           cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
@@ -71,10 +94,10 @@ class DocumentOCRAgent:
         self.running = False
         self.camera.release()
         cv2.destroyAllWindows()
+        self.context.destroy()  # Close ZeroMQ context
 
 
 if __name__ == "__main__":
     # For standalone testing
     agent = DocumentOCRAgent()
     agent.run()
-
