@@ -10,6 +10,8 @@ from agents.vision_agent.document_ocr import DocumentOCRAgent
 from agents.navigation.navigation_agent import NavigationAgent
 from core.utils import speak
 from threading import Thread
+from core.mcp_logger import MCPLogger
+
 
 
 class MasterAgent:
@@ -26,6 +28,7 @@ class MasterAgent:
         self.current_agent = None
         self.running = True
         self.agent_busy = False
+        self.logger = MCPLogger()
 
         # Visual feedback settings
         self.display_help = True
@@ -47,7 +50,7 @@ class MasterAgent:
             context = zmq.Context()
             subscriber = context.socket(zmq.SUB)
             subscriber.bind("tcp://*:5555")  # Agents will publish to this port
-            subscriber.setsockopt_string(zmq.SUBSCRIBE, "vision")
+
 
             while self.running:
                 try:
@@ -73,6 +76,8 @@ class MasterAgent:
             "data": data,
             "timestamp": timestamp
         }
+        #save to sql lite database
+        self.logger.insert_message(msg)
 
         # Agent-specific processing
         if agent_type == "barcode":
