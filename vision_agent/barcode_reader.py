@@ -75,6 +75,9 @@ class BarcodeReaderAgent:
                             product_info = self.lookup_product(barcode_data)
                             feedback = self.format_feedback(barcode_data, product_info)
 
+                            # Debug log before publishing to MCP
+                            print(f"[DEBUG] Publishing to MCP - Barcode: {barcode_data}, Product: {product_info}")
+
                             # MCP publishing
                             self._publish_to_mcp(barcode_data, product_info)
 
