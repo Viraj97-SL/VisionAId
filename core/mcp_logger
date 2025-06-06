@@ -1,4 +1,3 @@
-# core/mcp_logger.py
 import sqlite3
 
 class MCPLogger:
@@ -15,6 +14,8 @@ class MCPLogger:
                 code TEXT,
                 product TEXT,
                 brand TEXT,
+                text TEXT,
+                char_count INTEGER,
                 timestamp REAL
             )
         ''')
@@ -23,14 +24,16 @@ class MCPLogger:
     def insert_message(self, msg):
         data = msg.get("data", {})
         self.conn.execute('''
-            INSERT INTO vision_logs (source, agent, code, product, brand, timestamp)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO vision_logs (source, agent, code, product, brand, text, char_count, timestamp)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            msg.get("source"),
-            msg.get("agent"),
+            msg.get("source", ""),
+            msg.get("agent", ""),
             data.get("code", ""),
             data.get("product", ""),
             data.get("brand", ""),
+            data.get("text", ""),
+            data.get("char_count", 0),
             msg.get("timestamp", 0.0)
         ))
         self.conn.commit()
