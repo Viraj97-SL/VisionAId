@@ -48,7 +48,8 @@ class VisionAIDUI:
             'barcode_scanner': {'display_name': 'Barcode Reader'},
             'document_reader': {'display_name': 'Document OCR'},
             'navigation': {'display_name': 'Navigation'},
-            'ecommerce_agent': {'display_name': 'Search Online'}
+            'ecommerce_agent': {'display_name': 'Search Online'},
+            'emotion_detection_agent': {'display_name': 'Emotion Detection'}
         }
 
         for agent_name, config in agent_config.items():
