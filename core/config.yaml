@@ -19,5 +19,8 @@ agents:
     display_name: "Search Online"
     hotkey: "5"
 
-    
+  emotion_detection_agent:
+    display_name: "Emotion Detection"
+    hotkey: "6"
+
     
