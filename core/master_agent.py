@@ -8,6 +8,7 @@ from agents.ecommerce_agent.ecommerce_agent import EcommerceAgent
 from agents.vision_agent.object_detection import ObjectDetectionAgent
 from agents.vision_agent.document_ocr import DocumentOCRAgent
 from agents.navigation.navigation_agent import NavigationAgent
+from agents.vision_agent.emotion_detection_agent import EmotionDetectionAgent
 from core.utils import speak
 from threading import Thread
 from core.mcp_logger import MCPLogger
@@ -22,7 +23,8 @@ class MasterAgent:
             "barcode_scanner": BarcodeReaderAgent(),
             "document_reader": DocumentOCRAgent(),
             "navigation": NavigationAgent(),
-            "ecommerce_agent": EcommerceAgent()
+            "ecommerce_agent": EcommerceAgent(),
+            "emotion_detection_agent": EmotionDetectionAgent()
         }
 
         self.current_agent = None
@@ -93,6 +95,11 @@ class MasterAgent:
             objects = data.get("objects", [])
             if objects:
                 speak(f"Detected objects: {', '.join(objects[:3])}")
+
+        elif msg.get("agent") == "emotion":
+            emotion = msg["data"]["top_emotion"]
+            confidence = msg["data"]["confidence"]
+            speak(f"Detected emotion: {emotion} ({(confidence * 100):.1f}% confidence)")
 
     def run(self):
         try:
@@ -174,7 +181,8 @@ class MasterAgent:
                 "'Read document'",
                 "'Navigate'",
                 "'Ecommerce'",
-                "'Exit'"
+                "'Exit'",
+                "'emotion detection'"
             ]
 
             for i, cmd in enumerate(commands):
