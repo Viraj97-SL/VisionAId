@@ -101,7 +101,7 @@ class NavigationAgent:
         """Clean up resources and stop navigation."""
         try:
             self.navigator.stop_guidance()
-            speak("Navigation stopped. Goodbye!")
+            speak("Navigation stopped")
         except Exception as e:
             self.logger.error(f"Error during termination: {e}")
             speak("Error while stopping navigation.")
