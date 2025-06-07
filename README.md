@@ -6,167 +6,171 @@
 ![OpenCV](https://img.shields.io/badge/vision-OpenCV-red)
 ![PyTorch](https://img.shields.io/badge/ML-PyTorch-orange)
 
-VisionAID is an intelligent assistive system that combines voice-controlled navigation with real-time environmental awareness for visually impaired people and others. The system processes spoken commands to guide users to destinations using offline routing (OSRM/Geopy), while its computer vision modules detect objects (YOLOv8), scan barcodes (ZXing), and read documents (Tesseract/EasyOCR). Designed for full offline operation, it runs efficiently on low-cost hardware like Raspberry Pi, delivering accurate results through a modular Python architecture that integrates Whisper for speech recognition and pygame for audio feedback.
+**VisionAID** is a multi-agent assistive system designed to empower visually impaired individuals through intelligent voice-activated modules for navigation, vision analysis, and ecommerce. Built with a modular architecture, it combines OpenAI Whisper, YOLOv8, Tesseract/EasyOCR, and HuggingFace models—all coordinated by a Master Agent using a lightweight MCP (Message Control Protocol) and logs interactions in an SQLite database.
 
-## Features ✨
+> ✅ Designed for offline use  
+> ✅ Optimized for Raspberry Pi and low-power systems  
+> ✅ Modular agents and scalable architecture
 
-### Navigation Module 🗺️
-- Voice-controlled destination selection ("Find a hospital")
-- Automatic GPS location detection
-- Turn-by-turn audio guidance
+---
 
-### Vision Modules 👁️
-| Feature | Description | Tech Used |
-|---------|-------------|-----------|
-| Object Detection | Identifies 80+ common objects in real-time | YOLOv5 |
-| Barcode Reader | Scans EAN/UPC codes and announces products | OpenCV+ZXing |
-| Product Analyzer | Reads ingredients/nutrition facts | OCR+Tesseract |
-| Document Reader | Reads printed text with formatting | EasyOCR |
+## 🔥 Key Features
 
-### Ecommerce Agent 🛒 
-- Voice-based product query (e.g. “Find a backpack”)
-- Searches top results from Amazon and eBay
-- Compares prices and announces best deal
-- Works entirely via voice I/O for hands-free use
+### 🗺️ Navigation Module
+- Voice-guided destination selection (`"Find a pharmacy"`)
+- Offline geolocation and pathfinding (OSRM, Nominatim)
+- Turn-by-turn voice instructions
+- Location and route planning handled via dialog agents
 
-## Installation 💻
+### 👁️ Vision Modules
+| Feature | Description | Technology |
+|--------|-------------|------------|
+| Object Detection | Real-time object recognition | YOLOv8 + OpenCV |
+| Barcode Scanner | Reads and announces product details | Pyzbar + ZXing |
+| Document OCR | Reads printed materials aloud | Tesseract + EasyOCR |
+| Emotion Detection | Analyzes human emotions visually | HuggingFace (`FelaKuti/Emotion-detection`) |
+
+### 🛒 Ecommerce Agent
+- Voice-based product capture using Whisper
+- Live search via BeautifulSoup for Amazon/eBay
+- HuggingFace-based classification and routing
+- Price comparison, summarization, and negotiation logic
+
+---
+
+## 🏗️ Architecture
+
+The system is composed of 3 primary subsystems:  
+1. **Navigation Agent** – Handles user location, destination parsing, and route generation  
+2. **Vision Agent** – Handles object, barcode, emotion, and document recognition  
+3. **Ecommerce Agent** – Searches online marketplaces and compares deals  
+
+All agents communicate via the **Master Agent** using a custom **MCP** protocol, and system interactions are logged into a **SQLite** database using `mcp_logger.py`.
+
+![Architecture](https://github.com/Viraj97-SL/VisionAId/assets/...)  <!-- Replace with actual image link -->
+
+---
+
+## 📦 Project Structure
+
+```text
+visionAID/
+├── agents/
+│   ├── ecommerce_agent/
+│   │   ├── ecommerce_agent.py
+│   │   ├── product_capture_agent.py
+│   │   ├── web_search_agent.py
+│   │   ├── summary_agent.py
+│   │   ├── comparison_engine.py
+│   │   ├── negotiation_agent.py
+│   │   └── review_analyzer.py
+│   ├── navigation/
+│   │   ├── dialog_agent.py
+│   │   ├── location_agent.py
+│   │   ├── navigation_agent.py
+│   │   ├── navigator.py
+│   │   └── route_planner.py
+│   └── vision_agent/
+│       ├── object_detection.py
+│       ├── barcode_reader.py
+│       ├── document_ocr.py
+│       ├── emotion_detection_agent.py
+│       └── mcp_bridge.py
+├── core/
+│   ├── master_agent.py
+│   ├── utils.py
+│   ├── voice_control.py
+│   ├── mcp_logger.py
+│   └── config.yaml
+├── yolov8n.pt                  # YOLOv8 weights
+├── control_ui.py               # Tkinter-based GUI
+├── requirements.txt
+└── memory/                     # Audio logs and scan cache
+````
+
+---
+
+## 🧠 Key Technologies
+
+### 🔉 Voice & Audio
+
+* **Speech Recognition**: OpenAI Whisper
+* **Text-to-Speech**: `pygame`, `gTTS`
+* **Capture**: `PyAudio`, `sounddevice`
+
+### 🧭 Navigation
+
+* **Pathfinding**: OSRM, Geopy
+* **Location Query**: Nominatim
+* **Dialog Agent**: NLP + zero-shot routing via HuggingFace
+
+### 👁️ Vision
+
+* **Detection**: YOLOv8 (torch + OpenCV)
+* **OCR**: Tesseract + EasyOCR
+* **Barcode**: ZXing, Pyzbar
+* **Emotion**: HuggingFace Transformers
+
+### 📊 Ecommerce
+
+* **Web Scraping**: BeautifulSoup, Requests
+* **Negotiation/Review**: Transformer-enhanced text summarization
+* **Product Capture**: Voice interface with Whisper
+
+---
+
+## 💾 Installation
 
 ```bash
-# Clone with submodules
+# Clone the repository
 git clone --recurse-submodules https://github.com/Viraj97-SL/VisionAId.git
-cd Project1
+cd VisionAId
 
-# Install with pip
+# Install dependencies
 pip install -r requirements.txt
 
-# Additional setup for audio
-sudo apt-get install portaudio19-dev  # Linux
-brew install portaudio               # MacOS
+# Audio Setup (Linux)
+sudo apt-get install portaudio19-dev
 
-``` 
+# Audio Setup (Mac)
+brew install portaudio
+```
 
-## Project Structure 🗂️
+---
 
-```markdown
-## Project Structure
+## 🧪 MCP Protocol & Logging
 
-visionAID/
-├── .venv/                        # Virtual environment
-├── agents/
-│ ├── navigation/                 # Navigation subsystem
-│ │ ├── dialog_agent.py           # Voice interface (Whisper STT/TTS)
-│ │ ├── location_agent.py         # Geospatial search (OSM/Nominatim)
-│ │ ├── navigation_agent.py       # sub_main agent for navigation
-│ │ ├── navigator.py              # Guidance engine
-│ │ └── route_planner.py          # OSRM pathfinding
-│ ├── ecommerce_agent/            # NEW: Ecommerce subsystem
-│   ├── ecommerce_agent.py        # Coordinator
-│   ├── product_capture_agent.py  # Voice capture + Whisper
-│   ├── web_scraper_agent.py      # Amazon/eBay scraper
-│   └── summary_agent.py          # Price comparison
-│ ├── barcode_reader.py           # ZXing-based scanner
-│ ├── document_ocr.py             # Tesseract/EasyOCR processor
-│ └── object_detection.py         # YOLOv8 real-time detection
-├── core/
-│ ├── config.yaml                 # App configuration
-│ ├── master_agent.py             # Main controller
-│ ├── utils.py                    # Common utilities
-│ └── voice_control.py            # Audio pipeline
-├── memory/                       # Runtime artifacts
-│ ├── session_history.log         # JSON activity log
-│ └── output.wav                  # Audio cache
-├── control_ui.py                 # PyQt interface
-├── requirements.txt              # Pip dependencies
-└── yolov8n.pt                    # Pretrained vision model
+The system uses a custom inter-agent **MCP (Message Control Protocol)** for communication across agents. All task invocations and outcomes are logged in a local SQLite database using:
+
+```bash
+vision_logs.db
+```
+
+Access logs using any SQLite viewer or via Python script.
+
+---
+
+## 📚 Documentation
+
+* ✅ User Guide: \[coming soon]
+* ✅ API Reference: inline in each agent file
+* ✅ Development Setup: Install, run, and extend using modular structure
+
+---
+
+## ✅ Future Enhancements
+
+* 🧠 Integration with LangChain for multi-step agent planning
+* 🌍 Full offline ecommerce dataset cache
+* 🎮 Improved GUI with vision overlays and navigation HUD
+
+---
+
+> Created with ❤️ by Viraj | MIT License | [GitHub Repo](https://github.com/Viraj97-SL/VisionAId)
 
 ```
 
+---
 
-### Component Relationships
-
-```mermaid
-flowchart TD
-    A[Master Agent] --> B[Navigation]
-    A --> C[Vision]
-    A --> D[Ecommerce]
-    A --> E[UI]
-
-    B --> B1[Dialog]
-    B --> B2[Location]
-    B --> B3[Routing]
-    
-    C --> C1[Object Detection]
-    C --> C2[Barcode]
-    C --> C3[Document OCR]
-    
-    D --> D1[Product Voice Input]
-    D --> D2[Scraping Engine]
-    D --> D3[Comparison Engine]
-
-    E --> E1[Control Panel]
-    E --> E2[Voice I/O]
-
-
+Let me know if you want me to push this as a `README.md` update via pull request or if you want a `.md` file export.
 ```
-
-## Key Technologies 🛠️
-
-
-### Navigation Agent
-Voice Processing
-
-* Whisper (OpenAI's speech-to-text)
-
-* PyAudio/sounddevice (audio capture)
-
-Routing & Geocoding
-
-* OSRM (Open Source Routing Machine)
-
-* Geopy + Nominatim (location search)
-
-### Vision Modules
-Object Detection
-
-* YOLOv8 (via yolov8n.pt weights)
-
-* OpenCV (image processing)
-
-Barcode/OCR
-
-* ZXing and Pyzbar (barcode scanning)
-
-* Tesseract/EasyOCR (text extraction)
-
-### Ecommerce Agent
-Voice Product Capture
-
-* Whisper + sounddevice (voice interface)
-
-Web Scraping
-
-* BeautifulSoup + Requests (Amazon, eBay)
-
-Comparison Logic
-
-* Filtering, sorting, and summarizing deals via custom agent
-
-### Core System
-
-* Utilities
-
-* PyYAML (for config.yaml)
-
-* NumPy (audio/data processing)
-
-### Audio Feedback
-
-* pygame/gTTS (text-to-speech)
-
-## Documentation 📚
-
-User Guide
-
-API Reference
-
-Development Setup
