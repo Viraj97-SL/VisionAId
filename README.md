@@ -168,9 +168,4 @@ Access logs using any SQLite viewer or via Python script.
 
 > Created with ❤️ by Viraj | MIT License | [GitHub Repo](https://github.com/Viraj97-SL/VisionAId)
 
-```
 
----
-
-Let me know if you want me to push this as a `README.md` update via pull request or if you want a `.md` file export.
-```
