@@ -51,8 +51,8 @@ class MasterAgent:
         def _listen():
             context = zmq.Context()
             subscriber = context.socket(zmq.SUB)
-            subscriber.bind("tcp://*:5555")  # Agents will publish to this port
-
+            subscriber.bind("tcp://*:5555")
+            subscriber.setsockopt_string(zmq.SUBSCRIBE, '')
 
             while self.running:
                 try:
@@ -62,44 +62,60 @@ class MasterAgent:
                 except zmq.ZMQError as e:
                     if self.running:
                         speak(f"Communication error: {str(e)}")
+                        self.logger.log_error(f"ZMQ Error: {str(e)}")
                 except Exception as e:
-                    print(f"Message handling error: {str(e)}")
+                    error_msg = f"Message handling error: {str(e)}"
+                    print(error_msg)
+                    self.logger.log_error(error_msg)
 
         Thread(target=_listen, daemon=True).start()
 
     def _handle_vision_message(self, msg):
         """Process incoming messages from agents"""
-        agent_type = msg.get("agent", "")
-        data = msg.get("data", {})
-        timestamp = msg.get("timestamp", time.time())
+        try:
+            if not isinstance(msg, dict):
+                raise ValueError("Invalid message format")
 
-        # Store last message from each agent
-        self.last_messages[agent_type] = {
-            "data": data,
-            "timestamp": timestamp
-        }
-        #save to sql lite database
-        self.logger.insert_message(msg)
+            agent_type = msg.get("agent", "unknown")
+            data = msg.get("data", {})
+            timestamp = msg.get("timestamp", time.time())
 
-        # Agent-specific processing
-        if agent_type == "barcode":
-            code = data.get("code", "")
-            product = data.get("product", "unknown product")
-            speak(f"Barcode scanned: {product}")
+            # Store last message from each agent
+            self.last_messages[agent_type] = {
+                "data": data,
+                "timestamp": timestamp
+            }
 
-        elif agent_type == "document":
-            text = data.get("text", "")[:100]  # First 100 chars
-            speak(f"Document text recognized: {text}")
+            # Log to database
+            self.logger.insert_message({
+                "agent": agent_type,
+                "data": data,
+                "timestamp": timestamp
+            })
 
-        elif agent_type == "object":
-            objects = data.get("objects", [])
-            if objects:
-                speak(f"Detected objects: {', '.join(objects[:3])}")
+            # Agent-specific processing
+            if agent_type == "barcode":
+                product = data.get("product", "unknown product")
+                speak(f"Barcode scanned: {product}")
 
-        elif msg.get("agent") == "emotion":
-            emotion = msg["data"]["top_emotion"]
-            confidence = msg["data"]["confidence"]
-            speak(f"Detected emotion: {emotion} ({(confidence * 100):.1f}% confidence)")
+            elif agent_type == "document":
+                text = data.get("text", "")[:100]  # First 100 chars
+                speak(f"Document text recognized: {text}")
+
+            elif agent_type == "object":
+                objects = data.get("objects", [])
+                if objects:
+                    speak(f"Detected objects: {', '.join(objects[:3])}")
+
+            elif agent_type == "emotion":
+                emotion = data.get("top_emotion", "unknown")
+                confidence = data.get("confidence", 0)
+                speak(f"Detected emotion: {emotion} ({(confidence * 100):.1f}% confidence)")
+
+        except Exception as e:
+            error_msg = f"Error handling message: {str(e)}"
+            print(error_msg)
+            self.logger.log_error(error_msg)
 
     def run(self):
         try:
@@ -207,12 +223,19 @@ class MasterAgent:
         self.cleanup()
 
     def cleanup(self):
+        """Cleanup resources"""
         for agent in self.agents.values():
             if hasattr(agent, 'terminate'):
                 agent.terminate()
         cv2.destroyAllWindows()
+        self.logger.close_connection()
 
 
 if __name__ == "__main__":
     master = MasterAgent()
-    master.run()
+    try:
+        master.run()
+    except KeyboardInterrupt:
+        pass
+    finally:
+        master.cleanup()
