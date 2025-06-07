@@ -47,7 +47,10 @@ The system is composed of 3 primary subsystems:
 
 All agents communicate via the **Master Agent** using a custom **MCP** protocol, and system interactions are logged into a **SQLite** database using `mcp_logger.py`.
 
-![Architecture](https://github.com/Viraj97-SL/VisionAId/assets/...)  <!-- Replace with actual image link -->
+```mermaid graph TD User["🗣️ User (Voice Input)"] -->|Voice Command| Master["🤖 Master Agent"] Master --> Nav["🧭 Navigation Agent"] Master --> Vis["👁️ Vision Agent"] Master --> Eco["🛒 Ecommerce Agent"] Master --> UI["🖥️ UI Controller"] subgraph "🧭 Navigation Subsystem" Nav --> Dialog["🎙️ Dialog Agent"] Nav --> Location["📍 Location Agent"] Nav --> Route["🛣️ Route Planner"] Nav --> Navigator["🗺️ Navigator"] end subgraph "👁️ Vision Subsystem" Vis --> Object["🔍 Object Detection"] Vis --> Barcode["🏷️ Barcode Reader"] Vis --> OCR["📄 Document OCR"] Vis --> Emotion["😊 Emotion Detection"] end subgraph "🛒 Ecommerce Subsystem" Eco --> VoiceInput["🗨️ Product Capture Agent"] Eco --> Scraper["🌐 Web Search Agent"] Eco --> Reviews["⭐ Review Analyzer"] Eco --> Compare["📊 Comparison Engine"] Eco --> Negotiate["🤝 Negotiation Agent"] Eco --> Summary["🧾 Summary Agent"] end ```
+
+
+
 
 ---
 
