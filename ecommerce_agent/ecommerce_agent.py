@@ -49,10 +49,10 @@ class EcommerceAgent:
                 compared_results = self.summary_agent.compare_prices(results)
 
                 # Step 4: Get Reviews
-                reviews = self._get_product_reviews(compared_results)
+                self.reviews = self._get_product_reviews(compared_results)  # Store as instance variable
 
                 # Step 5: Generate Enhanced Report
-                summary = self._generate_comprehensive_report(product_name, compared_results, reviews)
+                summary = self._generate_comprehensive_report(product_name, compared_results, self.reviews)
 
                 # Step 6: Present Results
                 self._present_results(product_name, compared_results, summary)
@@ -67,7 +67,7 @@ class EcommerceAgent:
     def _ask_to_continue(self) -> bool:
         """Voice-enabled continuation prompt with better reliability."""
         recognizer = sr.Recognizer()
-        max_attempts = 3  # Limit retries before fallback
+        max_attempts = 1  # Limit retries before fallback
 
         for attempt in range(max_attempts):
             try:
@@ -104,7 +104,10 @@ class EcommerceAgent:
     def _scrape_multiple_sources(self, product_name: str) -> List[Dict]:
         """Enhanced scraping with error handling"""
         results = []
-        for scraper in [self.scraper_agent.scrape_amazon, self.scraper_agent.scrape_ebay]:
+        for scraper in [self.scraper_agent.scrape_amazon,
+                        self.scraper_agent.scrape_ebay,
+                        self.scraper_agent.scrape_argos,
+                        self.scraper_agent.scrape_newegg]:
             try:
                 results.extend(scraper(product_name))
                 time.sleep(1)  # Be polite to servers
@@ -115,9 +118,12 @@ class EcommerceAgent:
     def _get_product_reviews(self, products: List[Dict]) -> List[str]:
         """Get reviews for the top product"""
         if not products:
+            self.logger.debug("No products available to get reviews")
             return []
         try:
+            self.logger.debug(f"Attempting to scrape reviews from {products[0]['link']}")
             review_data = self.scraper_agent.scrape_with_reviews(products[0]['link'])
+            self.logger.debug(f"Found {len(review_data.get('reviews', []))} reviews")
             return review_data.get('reviews', [])
         except Exception as e:
             self.logger.error(f"Review collection error: {e}")
@@ -138,7 +144,35 @@ class EcommerceAgent:
             report.append("\n💡 Shopping Tips:\n" + "\n".join(f"- {tip}" for tip in self.tips))
 
         if reviews:
-            report.append("\n" + self.review_analyzer.generate_report(product_name, reviews))
+            self.logger.debug(f"Processing {len(reviews)} reviews")
+
+            # Ensure we have the enhanced ReviewAnalyzer methods
+            if not hasattr(self.review_analyzer, 'extract_representative_reviews'):
+                self.review_analyzer.extract_representative_reviews = lambda revs, n: revs[:n]
+
+            # Generate detailed review analysis
+            review_report = self.review_analyzer.generate_report(product_name, reviews)
+            report.append("\n" + review_report)
+
+            # Generate voice output components
+            sentiment = self.review_analyzer.analyze_sentiment(reviews)
+            keywords = self.review_analyzer.extract_keywords(reviews)[0]
+            sample_reviews = self.review_analyzer.extract_representative_reviews(reviews, 2)
+
+            self.review_analyzer.summary_points = [
+                f"Customer reviews show {sentiment['positive']} positive and {sentiment['negative']} negative opinions.",
+                f"Customers frequently mention {', '.join(keywords[:3])}."
+            ]
+
+            self.review_analyzer.review_highlights = [
+                "Here are some customer comments:",
+                *[f"Review {i + 1}: {review[:120]}{'...' if len(review) > 120 else ''}"
+                  for i, review in enumerate(sample_reviews)]
+            ]
+        else:
+            self.logger.debug("No reviews available for analysis")
+            self.review_analyzer.summary_points = ["No customer reviews available."]
+            self.review_analyzer.review_highlights = []
 
         return "\n".join(report)
 
@@ -148,23 +182,52 @@ class EcommerceAgent:
         """Handle output presentation with full voice feedback"""
         print("\n" + "=" * 60 + "\n")
         print(summary)
+        print("\n" + "=" * 60 + "\n")
 
-        # Voice output now includes tips
-        if products:
-            best_deal = products[0]
-            speak_output = [
-                f"I found {len(products)} results for {product_name}.",
-                f"The best deal is on {best_deal['site']} for {best_deal['price']}."
-            ]
+        if not products:
+            speak("No products found to present.")
+            return
 
-            if hasattr(self, 'tips') and self.tips:
-                speak_output.append("Here are some shopping tips:")
-                speak_output.extend(self.tips[:3])  # Speak top 3 tips
+        best_deal = products[0]
+        speak_output = [
+            f"I found {len(products)} results for {product_name}.",
+            f"The best deal is on {best_deal['site']} for {best_deal['price']}."
+        ]
 
-            if len(speak_output) > 2:  # If we have tips
-                speak_output.append("You can see more details on screen, do you want to hear them.")
+        # Add shopping tips if available
+        if hasattr(self, 'tips') and self.tips:
+            speak_output.append("Here are some shopping tips:")
+            speak_output.extend(self.tips[:3])
 
-            speak(" ".join(speak_output))
+        # Add review analysis if available
+        if hasattr(self.review_analyzer, 'summary_points'):
+            speak_output.extend(self.review_analyzer.summary_points)
+        else:
+            speak_output.append("No review analysis available.")
+
+        # Add review highlights if available - now using self.reviews
+        if hasattr(self, 'reviews') and self.reviews:
+            if hasattr(self.review_analyzer, 'review_highlights') and self.review_analyzer.review_highlights:
+                speak_output.extend(self.review_analyzer.review_highlights[:3])
+            else:
+                speak_output.append(f"Found {len(self.reviews)} customer reviews.")
+        else:
+            speak_output.append("No customer reviews available.")
+
+        # Speak all output with pauses
+        for message in speak_output:
+            speak(message)
+            time.sleep(0.3)
+
+
+
+
+    def _summarize_features(self, features: str, max_words=15) -> str:
+        """Shorten features for voice output"""
+        if not features:
+            return "No features listed"
+        words = features.split()
+        return " ".join(words[:max_words]) + ("..." if len(words) > max_words else "")
 
     def terminate(self):
         """Clean shutdown"""
