@@ -3,8 +3,9 @@ import whisper
 import tempfile
 import scipy.io.wavfile as wav
 import os
-from core.utils import speak
 import logging
+from core.utils import speak
+from transformers import pipeline
 
 class ProductCaptureAgent:
     def __init__(self):
@@ -12,12 +13,10 @@ class ProductCaptureAgent:
         self.model = whisper.load_model("small.en")
         self.sample_rate = 16000
         self.duration = 7
-        self.product_categories = {
-            'electronics': ['phone', 'laptop', 'tablet', 'camera', 'headphones'],
-            'clothing': ['shirt', 'pants', 'dress', 'shoes', 'jacket'],
-            'books': ['book', 'novel', 'textbook', 'magazine'],
-            'home': ['furniture', 'appliance', 'decoration', 'utensil']
-        }
+
+        # 🧠 Add HuggingFace Zero-Shot Classifier
+        self.classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+        self.categories = ["electronics", "clothing", "books", "home", "groceries", "beauty", "sports"]
 
     def record_audio(self, prompt):
         try:
@@ -30,7 +29,7 @@ class ProductCaptureAgent:
         except Exception as e:
             self.logger.error(f"Recording failed: {e}")
             speak("Recording error. Try again.")
-            print ("Recording error. Try again.")
+            print("Recording error. Try again.")
             return None
 
     def transcribe_audio(self, file_path):
@@ -47,6 +46,16 @@ class ProductCaptureAgent:
             except:
                 pass
 
+    def classify_category(self, text):
+        try:
+            result = self.classifier(text, self.categories)
+            top_category = result['labels'][0]  # Highest confidence
+            score = result['scores'][0]
+            return top_category, score
+        except Exception as e:
+            self.logger.error(f"Classification error: {e}")
+            return "general", 0.0
+
     def get_product_name(self):
         file_path = self.record_audio("What product are you looking for today?")
         if not file_path:
@@ -54,11 +63,9 @@ class ProductCaptureAgent:
         text = self.transcribe_audio(file_path)
         if not text:
             return None
-        for category, keywords in self.product_categories.items():
-            if any(f" {kw} " in f" {text} " for kw in keywords):
-                speak(f"Heard: {text}. Searching {category}.")
-                print (f"Heard: {text}. Searching {category}.")
-                return text
-        speak(f"Heard: {text}. Searching.")
-        print (f"Heard: {text}. Searching.")
-        return text
+
+        category, confidence = self.classify_category(text)
+        speak(f"Heard: {text}. Searching {category}.")
+        print(f"Heard: {text}. Category: {category} (Confidence: {confidence:.2f})")
+
+        return text  # You can return `text, category` if you want category info too
