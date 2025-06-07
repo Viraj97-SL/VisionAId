@@ -32,6 +32,46 @@ class WebScraperAgent:
             self.logger.error(f"Amazon scrape error: {e}")
             return []
 
+    def scrape_argos(self, query):
+        url = f"https://www.argos.co.uk/search/{query.replace(' ', '%20')}/"
+        try:
+            resp = requests.get(url, headers=self.headers)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            items = soup.select("div.ProductCardstyles__Wrapper-sc-1fg9csv-0")[:3]
+            results = []
+            for item in items:
+                try:
+                    title = item.find('h2').text.strip()
+                    price = item.find('strong', class_='ProductPrice').text.strip()
+                    link = 'https://www.argos.co.uk' + item.find('a')['href']
+                    results.append({'site': 'Argos', 'title': title, 'price': price, 'link': link})
+                except:
+                    continue
+            return results
+        except Exception as e:
+            self.logger.error(f"Argos scrape error: {e}")
+            return []
+
+    def scrape_newegg(self, query):
+        url = f"https://www.newegg.com/p/pl?d={query.replace(' ', '+')}"
+        try:
+            resp = requests.get(url, headers=self.headers)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            items = soup.select('div.item-cell')[:3]
+            results = []
+            for item in items:
+                try:
+                    title = item.select_one('a.item-title').text.strip()
+                    price = item.select_one('li.price-current').text.strip().replace('\xa0', ' ')
+                    link = item.select_one('a.item-title')['href']
+                    results.append({'site': 'Newegg', 'title': title, 'price': price, 'link': link})
+                except:
+                    continue
+            return results
+        except Exception as e:
+            self.logger.error(f"Newegg scrape error: {e}")
+            return []
+
     def scrape_ebay(self, query):
         url = f'https://www.ebay.com/sch/i.html?_nkw={query.replace(" ", "+")}'
         try:
