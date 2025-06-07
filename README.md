@@ -49,35 +49,35 @@ All agents communicate via the **Master Agent** using a custom **MCP** protocol,
 
 ```mermaid
 graph TD
-    User[User (Voice Input)] -->|Voice| Master[Master Agent]
-    Master --> Nav[Navigation Agent]
-    Master --> Vis[Vision Agent]
-    Master --> Eco[Ecommerce Agent]
-    Master --> UI[UI Controller]
+    Master-->Nav[Navigation Agent]
+    Master-->Vis[Vision Agent]
+    Master-->Eco[Ecommerce Agent]
+    Master-->UI[UI Controller]
 
     subgraph Navigation Subsystem
-        Nav --> Dialog[Dialog Agent]
-        Nav --> Location[Location Agent]
-        Nav --> Route[Route Planner]
-        Nav --> Navigator[Navigator]
+        Nav-->Dialog[Dialog Agent]
+        Nav-->Location[Location Agent]
+        Nav-->Route[Route Planner]
+        Nav-->Navigator[Navigator]
     end
 
     subgraph Vision Subsystem
-        Vis --> Object[Object Detection]
-        Vis --> Barcode[Barcode Reader]
-        Vis --> OCR[Document OCR]
-        Vis --> Emotion[Emotion Detection]
+        Vis-->Object[Object Detection]
+        Vis-->Barcode[Barcode Reader]
+        Vis-->OCR[Document OCR]
+        Vis-->Emotion[Emotion Detection]
     end
 
     subgraph Ecommerce Subsystem
-        Eco --> VoiceInput[Product Capture Agent]
-        Eco --> Scraper[Web Search Agent]
-        Eco --> Reviews[Review Analyzer]
-        Eco --> Compare[Comparison Engine]
-        Eco --> Negotiate[Negotiation Agent]
-        Eco --> Summary[Summary Agent]
+        Eco-->VoiceInput[Product Capture Agent]
+        Eco-->Scraper[Web Search Agent]
+        Eco-->Reviews[Review Analyzer]
+        Eco-->Compare[Comparison Engine]
+        Eco-->Negotiate[Negotiation Agent]
+        Eco-->Summary[Summary Agent]
     end
 ```
+
 ---
 
 ## 📦 Project Structure
